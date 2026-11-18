@@ -1,0 +1,1091 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>✨ Purple Pong</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      font-family: system-ui, sans-serif;
+      color: #f5efff;
+      background: #10091e;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      min-height: 100vh;
+      margin: 0;
+      padding: 24px;
+      display: grid;
+      place-items: center;
+      background:
+        radial-gradient(ellipse at 50% 0%, #482177 0%, transparent 58%),
+        radial-gradient(circle at 10% 85%, #25113f 0%, transparent 35%),
+        #10091e;
+    }
+
+    main { width: min(940px, 100%); }
+
+    h1 {
+      margin: 0;
+      color: #f6eaff;
+      text-align: center;
+      text-transform: uppercase;
+      letter-spacing: .14em;
+      text-shadow: 0 0 25px #c46bff88;
+    }
+
+    .subtitle {
+      margin: 8px 0 20px;
+      color: #d3bce9;
+      text-align: center;
+    }
+
+    .toolbar,
+    .round-controls,
+    .customizations,
+    .player,
+    .footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .toolbar { margin-bottom: 12px; }
+
+    .round-controls,
+    .customizations {
+      margin-bottom: 12px;
+      padding: 14px 16px;
+      border: 1px solid #68488e;
+      border-radius: 14px;
+      background: #211333dd;
+      box-shadow: 0 8px 28px #08031166;
+    }
+
+    .round-controls { justify-content: flex-start; }
+    .player { justify-content: flex-start; }
+
+    .round-status {
+      flex: 1;
+      color: #dcc8f1;
+    }
+
+    .customizations h2 {
+      width: 100%;
+      margin: 0;
+      color: #ecd9ff;
+      font-size: 1.05rem;
+    }
+
+    select, button {
+      border: 1px solid #7957a0;
+      border-radius: 9px;
+      padding: 9px 12px;
+      background: #302047;
+      color: #f5efff;
+      font: inherit;
+    }
+
+    button {
+      cursor: pointer;
+      background: linear-gradient(135deg, #9d54dc, #6532a2);
+      border-color: #bd83ef;
+      font-weight: 700;
+    }
+
+    button:hover:not(:disabled), select:hover {
+      border-color: #e2c4ff;
+      filter: brightness(1.12);
+    }
+
+    button:disabled {
+      cursor: not-allowed;
+      opacity: .48;
+    }
+
+    .unlock {
+      color: #cbb8df;
+      font-size: .85rem;
+    }
+
+    .game-wrap {
+      position: relative;
+      overflow: hidden;
+      border: 1px solid #7957a0;
+      border-radius: 16px;
+      background: #10091e;
+      box-shadow: 0 20px 70px #080311aa, 0 0 28px #a84cff22;
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: auto;
+      cursor: pointer;
+      touch-action: manipulation;
+      outline: none;
+    }
+
+    canvas:focus-visible {
+      box-shadow: inset 0 0 0 3px #e2c4ff;
+    }
+
+    .scoreboard {
+      position: absolute;
+      inset: 14px 0 auto;
+      display: flex;
+      justify-content: center;
+      gap: 34px;
+      pointer-events: none;
+      font-size: clamp(24px, 5vw, 42px);
+      font-weight: 800;
+      text-shadow: 0 2px 12px #10091e;
+    }
+
+    .scoreboard span {
+      min-width: 42px;
+      text-align: center;
+    }
+
+    .level-display {
+      position: absolute;
+      top: 22px;
+      left: 18px;
+      color: #ead9ff;
+      font-weight: 700;
+      text-shadow: 0 2px 12px #10091e;
+      pointer-events: none;
+    }
+
+    .message {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      padding: 20px;
+      color: #fff3ff;
+      text-align: center;
+      font-size: clamp(20px, 4vw, 32px);
+      font-weight: 800;
+      text-shadow: 0 2px 18px #10091e;
+      pointer-events: none;
+    }
+
+    .footer {
+      justify-content: center;
+      margin-top: 12px;
+      color: #d3bce9;
+      font-size: .92rem;
+      text-align: center;
+    }
+
+    .start-screen {
+      position: fixed;
+      inset: 0;
+      z-index: 10;
+      display: grid;
+      place-items: center;
+      overflow-y: auto;
+      padding: 20px;
+      background: #10091eee;
+      backdrop-filter: blur(8px);
+    }
+
+    .start-screen[hidden] { display: none; }
+
+    .start-card {
+      width: min(620px, 100%);
+      max-height: calc(100vh - 40px);
+      overflow-y: auto;
+      padding: 24px;
+      border: 1px solid #a76bda;
+      border-radius: 18px;
+      background: linear-gradient(145deg, #302047, #1b1029);
+      box-shadow: 0 20px 70px #080311cc, 0 0 35px #a84cff33;
+    }
+
+    .start-card h1 { margin-bottom: 8px; }
+
+    .start-card h2 {
+      margin: 20px 0 8px;
+      color: #e7c9ff;
+      font-size: 1.1rem;
+    }
+
+    .start-card p,
+    .start-card li {
+      color: #e0d1ef;
+      line-height: 1.55;
+    }
+
+    .start-card ul {
+      margin: 8px 0;
+      padding-left: 22px;
+    }
+
+    #startGameButton {
+      display: block;
+      margin: 22px auto 0;
+      padding: 12px 24px;
+      font-size: 1.05rem;
+    }
+
+    @media (max-width: 580px) {
+      body { padding: 14px; }
+      .player { width: 100%; }
+      .round-controls { align-items: flex-start; }
+      .round-status { flex-basis: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <section class="start-screen" id="startScreen" role="dialog"
+           aria-modal="true" aria-labelledby="startTitle">
+    <div class="start-card">
+      <h1 id="startTitle">🏓 Purple Pong</h1>
+      <p>Ready to rally?</p>
+
+      <h2>📜 Rules</h2>
+      <ul>
+        <li>First player to score 5 points wins the round.</li>
+        <li>The ball bounces off paddles and the top and bottom walls.</li>
+        <li>If the ball passes a paddle, the other player scores.</li>
+        <li>The ball serves again automatically after every point.</li>
+        <li>Press <strong>Next Round</strong> after a round ends.</li>
+        <li>Another ball joins every 3 levels.</li>
+        <li>Points and levels unlock paddle colors and ball characters.</li>
+      </ul>
+
+      <h2>🎮 How to play</h2>
+      <ul>
+        <li>Player 1 moves with <strong>W / S</strong> or <strong>↑ / ↓</strong>.</li>
+        <li>In 2-player mode, Player 2 uses <strong>↑ / ↓</strong>.</li>
+        <li>In solo mode, the CPU uses medium difficulty.</li>
+        <li>Pause with <strong>Space</strong>, the Pause button, or a game-area click.</li>
+      </ul>
+
+      <button id="startGameButton" type="button">🚀 Start Game</button>
+    </div>
+  </section>
+
+  <main>
+    <h1>✨ Purple Pong ✨</h1>
+    <p class="subtitle">
+      🏓 First to 5 points wins the round. Every 3 levels, another ball joins!
+    </p>
+
+    <div class="toolbar">
+      <label>
+        Game mode
+        <select id="mode">
+          <option value="computer">Solo vs. Computer 🤖</option>
+          <option value="twoPlayer">Local 2-Player 👫</option>
+        </select>
+      </label>
+      <button id="restart" type="button">🔄 Start over</button>
+    </div>
+
+    <section class="round-controls" aria-label="Round controls">
+      <button id="pauseButton" type="button">⏸️ Pause</button>
+      <button id="nextRoundButton" type="button" hidden>➡️ Next Round</button>
+      <span class="round-status" id="roundStatus" aria-live="polite">
+        Choose Start Game to begin.
+      </span>
+    </section>
+
+    <section class="customizations" aria-label="Customizations">
+      <h2>🎨 Customize your game</h2>
+
+      <div class="player">
+        <strong>Player 1 💜</strong>
+        <label>
+          Paddle
+          <select id="color1" aria-label="Player 1 paddle color"></select>
+        </label>
+        <span class="unlock" id="progress1"></span>
+      </div>
+
+      <div class="player">
+        <strong id="player2Name">Computer 🤖</strong>
+        <label>
+          Paddle
+          <select id="color2" aria-label="Player 2 paddle color"></select>
+        </label>
+        <span class="unlock" id="progress2"></span>
+      </div>
+
+      <div class="player">
+        <strong>Balls ⚽</strong>
+        <label>
+          Character
+          <select id="ballCharacter" aria-label="Ball character"></select>
+        </label>
+        <span class="unlock" id="ballUnlockProgress"></span>
+      </div>
+    </section>
+
+    <div class="game-wrap">
+      <canvas id="game" width="900" height="520" tabindex="0"
+              aria-label="Pong game. Click to pause or resume.">
+        Your browser does not support canvas.
+      </canvas>
+      <div class="level-display" id="levelDisplay"></div>
+      <div class="scoreboard" aria-live="polite">
+        <span id="score1">0</span>
+        <span>:</span>
+        <span id="score2">0</span>
+      </div>
+      <div class="message" id="message"></div>
+    </div>
+
+    <div class="footer">
+      <span id="controlsHelp">Player 1: W / S or ↑ / ↓</span>
+      <span id="player2Help">Medium CPU controls the right paddle</span>
+    </div>
+  </main>
+
+  <script>
+    const canvas = document.querySelector("#game");
+    const ctx = canvas.getContext("2d");
+
+    const modeSelect = document.querySelector("#mode");
+    const restartButton = document.querySelector("#restart");
+    const pauseButton = document.querySelector("#pauseButton");
+    const nextRoundButton = document.querySelector("#nextRoundButton");
+    const startScreen = document.querySelector("#startScreen");
+    const startGameButton = document.querySelector("#startGameButton");
+    const message = document.querySelector("#message");
+    const roundStatus = document.querySelector("#roundStatus");
+
+    const scoreDisplays = [
+      document.querySelector("#score1"),
+      document.querySelector("#score2")
+    ];
+
+    const colorSelects = [
+      document.querySelector("#color1"),
+      document.querySelector("#color2")
+    ];
+
+    const progressDisplays = [
+      document.querySelector("#progress1"),
+      document.querySelector("#progress2")
+    ];
+
+    const ballCharacterSelect = document.querySelector("#ballCharacter");
+
+    const W = canvas.width;
+    const H = canvas.height;
+    const WIN_SCORE = 5;
+    const paddle = { w: 13, h: 92, speed: 500 };
+
+    const paddleColors = [
+      { name: "Neon Blue", hex: "#55b8ff", unlockAt: 0 },
+      { name: "Hot Pink", hex: "#ff58c7", unlockAt: 3 },
+      { name: "Toxic Lime", hex: "#b7ff4a", unlockAt: 6 },
+      { name: "Solar Gold", hex: "#ffd166", unlockAt: 10 },
+      { name: "Ultra Violet", hex: "#a98bff", unlockAt: 15 }
+    ];
+
+    const ballCharacters = [
+      { name: "Classic", emoji: "", color: "#f4f7ff", unlockAt: 1 },
+      { name: "Fireball", emoji: "🔥", color: "#ff7138", unlockAt: 2 },
+      { name: "Monkey Ball", emoji: "🐵", color: "#d89b55", unlockAt: 3 },
+      { name: "Snowball", emoji: "❄️", color: "#8cecff", unlockAt: 5 },
+      { name: "Galaxy Ball", emoji: "🌌", color: "#bd8cff", unlockAt: 8 }
+    ];
+
+    // Progress intentionally starts fresh whenever the page loads.
+    const progress = {
+      totals: [0, 0],
+      colors: ["Neon Blue", "Neon Blue"],
+      highestLevel: 1,
+      ballCharacter: "Classic"
+    };
+
+    let level = 1;
+    let scores = [0, 0];
+    let leftY = (H - paddle.h) / 2;
+    let rightY = (H - paddle.h) / 2;
+    let balls = [];
+    let gameState = "menu";
+    let lastTime = 0;
+    const keys = new Set();
+
+    function getPaddleColor(player) {
+      return paddleColors.find(item => item.name === progress.colors[player])
+        || paddleColors[0];
+    }
+
+    function getBallCharacter() {
+      return ballCharacters.find(item => item.name === progress.ballCharacter)
+        || ballCharacters[0];
+    }
+
+    function updatePaddleMenus() {
+      colorSelects.forEach((select, player) => {
+        const unlocked = paddleColors.filter(
+          item => progress.totals[player] >= item.unlockAt
+        );
+
+        if (!unlocked.some(item => item.name === progress.colors[player])) {
+          progress.colors[player] = unlocked[0].name;
+        }
+
+        select.replaceChildren();
+
+        paddleColors.forEach(item => {
+          const option = document.createElement("option");
+          option.value = item.name;
+          option.textContent = item.unlockAt === 0
+            ? `${item.name} — unlocked`
+            : `${item.name} — ${item.unlockAt} points`;
+          option.disabled = progress.totals[player] < item.unlockAt;
+          option.selected = item.name === progress.colors[player];
+          select.append(option);
+        });
+
+        const next = paddleColors.find(
+          item => item.unlockAt > progress.totals[player]
+        );
+
+        progressDisplays[player].textContent = next
+          ? `${progress.totals[player]} points · next at ${next.unlockAt}`
+          : `${progress.totals[player]} points · all unlocked`;
+      });
+    }
+
+    function updateBallMenu() {
+      if (!ballCharacters.some(
+        item =>
+          item.name === progress.ballCharacter &&
+          progress.highestLevel >= item.unlockAt
+      )) {
+        progress.ballCharacter = "Classic";
+      }
+
+      ballCharacterSelect.replaceChildren();
+
+      ballCharacters.forEach(item => {
+        const option = document.createElement("option");
+        option.value = item.name;
+        option.textContent =
+          item.unlockAt === 1
+            ? `${item.emoji || "⚪"} ${item.name} — unlocked`
+            : `${item.emoji} ${item.name} — Level ${item.unlockAt}`;
+        option.disabled = progress.highestLevel < item.unlockAt;
+        option.selected = item.name === progress.ballCharacter;
+        ballCharacterSelect.append(option);
+      });
+
+      const next = ballCharacters.find(
+        item => item.unlockAt > progress.highestLevel
+      );
+
+      document.querySelector("#ballUnlockProgress").textContent = next
+        ? `Best: Level ${progress.highestLevel} · next at Level ${next.unlockAt}`
+        : `Best: Level ${progress.highestLevel} · all unlocked`;
+    }
+
+    colorSelects.forEach((select, player) => {
+      select.addEventListener("change", () => {
+        progress.colors[player] = select.value;
+      });
+    });
+
+    ballCharacterSelect.addEventListener("change", () => {
+      progress.ballCharacter = ballCharacterSelect.value;
+    });
+
+    function updateScoreboard() {
+      scoreDisplays.forEach((display, player) => {
+        display.textContent = scores[player];
+      });
+    }
+
+    function updateLevelDisplay() {
+      const count = 1 + Math.floor((level - 1) / 3);
+      document.querySelector("#levelDisplay").textContent =
+        `🌟 LEVEL ${level} · ${count} ${count === 1 ? "BALL" : "BALLS"}`;
+    }
+
+    function serveBall(index, total, direction = Math.random() < 0.5 ? -1 : 1) {
+      const baseSpeed = Math.min(780, 330 + level * 24);
+      const angle =
+        Math.random() * 0.65 - 0.325 +
+        (index - (total - 1) / 2) * 0.16;
+
+      return {
+        x: W / 2,
+        y: H / 2 + (index - (total - 1) / 2) * 20,
+        r: 10,
+        vx: direction * baseSpeed * Math.cos(angle),
+        vy: baseSpeed * Math.sin(angle),
+        trail: []
+      };
+    }
+
+    function updateControls() {
+      const paused = gameState === "paused";
+      const betweenRounds = gameState === "between-rounds";
+
+      pauseButton.textContent = paused ? "▶️ Resume" : "⏸️ Pause";
+      pauseButton.disabled = betweenRounds || gameState === "menu";
+      nextRoundButton.hidden = !betweenRounds;
+
+      if (betweenRounds) {
+        roundStatus.textContent =
+          "Round over · Customize your game, then press Next Round.";
+      } else if (paused) {
+        roundStatus.textContent =
+          "Game paused · Press Space, click the game, or Resume.";
+      } else if (gameState === "menu") {
+        roundStatus.textContent = "Choose Start Game to begin.";
+      } else {
+        roundStatus.textContent =
+          "Game in progress · Press Space or click the game to pause.";
+      }
+    }
+
+    function startLevel() {
+      gameState = "playing";
+      scores = [0, 0];
+      leftY = (H - paddle.h) / 2;
+      rightY = (H - paddle.h) / 2;
+
+      progress.highestLevel = Math.max(progress.highestLevel, level);
+      progress.highestLevel = Math.min(progress.highestLevel, 999);
+
+      updatePaddleMenus();
+      updateBallMenu();
+      updateScoreboard();
+      updateLevelDisplay();
+
+      const count = 1 + Math.floor((level - 1) / 3);
+      balls = Array.from({ length: count }, (_, index) =>
+        serveBall(index, count)
+      );
+
+      message.textContent = "";
+      updateControls();
+    }
+
+    function startOver() {
+      level = 1;
+      startLevel();
+    }
+
+    function finishRound(player) {
+      if (gameState !== "playing") return;
+
+      gameState = "between-rounds";
+      const winner =
+        player === 0
+          ? "Player 1"
+          : (modeSelect.value === "twoPlayer" ? "Player 2" : "Computer");
+
+      message.textContent = `🏆 ${winner} wins Level ${level}!`;
+      updateControls();
+    }
+
+    function startNextRound() {
+      if (gameState !== "between-rounds") return;
+      level++;
+      startLevel();
+    }
+
+    function awardPoint(player) {
+      scores[player]++;
+      progress.totals[player]++;
+      updatePaddleMenus();
+      updateScoreboard();
+
+      if (scores[player] >= WIN_SCORE) finishRound(player);
+    }
+
+    function togglePause() {
+      if (gameState === "playing") {
+        gameState = "paused";
+        message.textContent = "⏸️ Paused";
+      } else if (gameState === "paused") {
+        gameState = "playing";
+        message.textContent = "";
+      } else {
+        return;
+      }
+
+      updateControls();
+    }
+
+    function movePaddles(dt) {
+      const down = key => keys.has(key);
+
+      const p1Direction =
+        (down("s") || down("arrowdown") ? 1 : 0) -
+        (down("w") || down("arrowup") ? 1 : 0);
+
+      leftY += p1Direction * paddle.speed * dt;
+      leftY = Math.max(0, Math.min(H - paddle.h, leftY));
+
+      if (modeSelect.value === "twoPlayer") {
+        const p2Direction =
+          (down("arrowdown") ? 1 : 0) -
+          (down("arrowup") ? 1 : 0);
+
+        rightY += p2Direction * paddle.speed * dt;
+      } else {
+        const incoming = balls
+          .filter(ball => ball.vx > 0)
+          .sort((a, b) => b.x - a.x)[0];
+
+        if (incoming) {
+          const wobble =
+            Math.sin(performance.now() / 430) * 28;
+          const target = incoming.y - paddle.h / 2 + wobble;
+          const cpuSpeed =
+            Math.min(410 + (level - 1) * 25, 760);
+          const difference = target - rightY;
+
+          rightY += Math.max(
+            -cpuSpeed,
+            Math.min(cpuSpeed, difference)
+          ) * dt;
+        }
+      }
+
+      rightY = Math.max(0, Math.min(H - paddle.h, rightY));
+    }
+
+    function bounceFromPaddle(ball, faceX, paddleY, direction) {
+      const offset =
+        (ball.y - (paddleY + paddle.h / 2)) / (paddle.h / 2);
+
+      const speed = Math.min(
+        1050,
+        Math.hypot(ball.vx, ball.vy) *
+          (1.035 + Math.min(level, 20) * 0.002)
+      );
+
+      ball.x = faceX + direction * (ball.r + 1);
+      ball.vx = direction * speed * Math.cos(offset * 0.95);
+      ball.vy = speed * Math.sin(offset * 0.95);
+    }
+
+    function updateBall(ball, dt) {
+      ball.trail.push({ x: ball.x, y: ball.y });
+      if (ball.trail.length > 8) ball.trail.shift();
+
+      ball.x += ball.vx * dt;
+      ball.y += ball.vy * dt;
+
+      if (ball.y - ball.r <= 0) {
+        ball.y = ball.r;
+        ball.vy = Math.abs(ball.vy);
+      } else if (ball.y + ball.r >= H) {
+        ball.y = H - ball.r;
+        ball.vy = -Math.abs(ball.vy);
+      }
+
+      const leftX = 34;
+      const rightX = W - 34 - paddle.w;
+
+      if (
+        ball.vx < 0 &&
+        ball.x - ball.r <= leftX + paddle.w &&
+        ball.x + ball.r >= leftX &&
+        ball.y >= leftY &&
+        ball.y <= leftY + paddle.h
+      ) {
+        bounceFromPaddle(ball, leftX + paddle.w, leftY, 1);
+      }
+
+      if (
+        ball.vx > 0 &&
+        ball.x + ball.r >= rightX &&
+        ball.x - ball.r <= rightX + paddle.w &&
+        ball.y >= rightY &&
+        ball.y <= rightY + paddle.h
+      ) {
+        bounceFromPaddle(ball, rightX, rightY, -1);
+      }
+
+      if (ball.x + ball.r < 0) return 1;
+      if (ball.x - ball.r > W) return 0;
+      return null;
+    }
+
+    function update(dt) {
+      movePaddles(dt);
+
+      for (let i = 0; i < balls.length; i++) {
+        const scorer = updateBall(balls[i], dt);
+        if (scorer === null) continue;
+
+        awardPoint(scorer);
+        if (gameState !== "playing") break;
+
+        const direction = scorer === 0 ? -1 : 1;
+        balls[i] = serveBall(i, balls.length, direction);
+      }
+    }
+
+    function drawPaddle(x, y, color) {
+      ctx.fillStyle = color;
+      ctx.shadowColor = color;
+      ctx.shadowBlur = 18;
+      ctx.fillRect(x, y, paddle.w, paddle.h);
+      ctx.shadowBlur = 0;
+    }
+
+    function drawFlame(x, y, size, time, phase = 0) {
+      const flicker =
+        0.78 + Math.sin(time / 75 + phase) * 0.22;
+
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.scale(flicker, flicker);
+
+      ctx.beginPath();
+      ctx.moveTo(0, size);
+      ctx.bezierCurveTo(
+        -size * 1.15, size * 0.2,
+        -size * 0.65, -size * 0.9,
+        size * 0.08, -size * 1.35
+      );
+      ctx.bezierCurveTo(
+        size * 0.16, -size * 0.65,
+        size * 1.1, -size * 0.35,
+        0, size
+      );
+      ctx.fillStyle = "#ff512f";
+      ctx.fill();
+
+      ctx.beginPath();
+      ctx.moveTo(0, size * 0.65);
+      ctx.bezierCurveTo(
+        -size * 0.42, size * 0.1,
+        size * 0.12, -size * 0.35,
+        size * 0.1, -size * 0.75
+      );
+      ctx.bezierCurveTo(
+        size * 0.7, -size * 0.15,
+        size * 0.35, size * 0.35,
+        0, size * 0.65
+      );
+      ctx.fillStyle = "#ffd166";
+      ctx.fill();
+
+      ctx.restore();
+    }
+
+    function drawMonkeyTail(ball, time) {
+      const angle = Math.atan2(ball.vy, ball.vx);
+      const wag = Math.sin(time / 90) * 7;
+
+      ctx.save();
+      ctx.translate(ball.x, ball.y);
+      ctx.rotate(angle);
+
+      ctx.beginPath();
+      ctx.moveTo(-ball.r * 0.55, 2);
+      ctx.quadraticCurveTo(
+        -ball.r * 1.4,
+        -wag,
+        -ball.r * 2.45,
+        wag
+      );
+      ctx.strokeStyle = "#8b552f";
+      ctx.lineWidth = 5;
+      ctx.lineCap = "round";
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.arc(-ball.r * 2.45, wag, 3.5, 0, Math.PI * 2);
+      ctx.fillStyle = "#d89b55";
+      ctx.fill();
+
+      ctx.restore();
+    }
+
+    function drawSnowflake(x, y, size, rotation) {
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.rotate(rotation);
+      ctx.strokeStyle = "#d8f8ff";
+      ctx.lineWidth = 1.5;
+      ctx.lineCap = "round";
+
+      for (let arm = 0; arm < 6; arm++) {
+        ctx.save();
+        ctx.rotate((Math.PI * 2 * arm) / 6);
+
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.lineTo(0, -size);
+        ctx.moveTo(0, -size * 0.55);
+        ctx.lineTo(-size * 0.25, -size * 0.8);
+        ctx.moveTo(0, -size * 0.55);
+        ctx.lineTo(size * 0.25, -size * 0.8);
+        ctx.stroke();
+
+        ctx.restore();
+      }
+
+      ctx.restore();
+    }
+
+    function drawSnowEffect(ball, time) {
+      ctx.save();
+
+      ctx.beginPath();
+      ctx.arc(ball.x, ball.y, ball.r + 9, 0, Math.PI * 2);
+      ctx.fillStyle = "rgba(140, 236, 255, 0.12)";
+      ctx.fill();
+
+      ball.trail.forEach((point, index) => {
+        const phase = time / 420 + index * 1.7;
+        const driftX = Math.sin(phase) * 5;
+        const driftY = Math.cos(phase * 0.8) * 5;
+        const size = 3 + ((index % 3) * 1.2);
+
+        drawSnowflake(
+          point.x + driftX,
+          point.y + driftY,
+          size,
+          phase
+        );
+      });
+
+      for (let i = 0; i < 3; i++) {
+        const angle =
+          time / 550 + (i * Math.PI * 2) / 3;
+        const x =
+          ball.x + Math.cos(angle) * (ball.r + 8);
+        const y =
+          ball.y + Math.sin(angle) * (ball.r + 8);
+        drawSnowflake(x, y, 3.5, -angle);
+      }
+
+      ctx.restore();
+    }
+
+    function drawGalaxyAurora(ball, time) {
+      const drift = time / 550;
+      const direction = ball.vx >= 0 ? -1 : 1;
+
+      ctx.save();
+      ctx.lineCap = "round";
+      ctx.globalCompositeOperation = "screen";
+
+      for (let ribbon = 0; ribbon < 3; ribbon++) {
+        const sway =
+          Math.sin(drift + ribbon * 1.6) * 15;
+        const startX = ball.x + direction * 5;
+        const startY = ball.y + (ribbon - 1) * 4;
+        const endX = ball.x + direction * (36 + ribbon * 8);
+        const endY = ball.y + sway + (ribbon - 1) * 8;
+
+        const gradient =
+          ctx.createLinearGradient(startX, startY, endX, endY);
+
+        gradient.addColorStop(0, "rgba(190, 110, 255, 0.7)");
+        gradient.addColorStop(0.5, "rgba(79, 255, 220, 0.42)");
+        gradient.addColorStop(1, "rgba(92, 85, 255, 0)");
+
+        ctx.beginPath();
+        ctx.moveTo(startX, startY);
+        ctx.bezierCurveTo(
+          ball.x + direction * 14,
+          ball.y + sway - 18,
+          ball.x + direction * 25,
+          ball.y + sway + 18,
+          endX,
+          endY
+        );
+        ctx.strokeStyle = gradient;
+        ctx.lineWidth = 7 - ribbon;
+        ctx.shadowColor =
+          ribbon % 2 ? "#52ffdf" : "#c56bff";
+        ctx.shadowBlur = 14;
+        ctx.stroke();
+      }
+
+      ball.trail.forEach((point, index) => {
+        const twinkle =
+          0.45 +
+          (Math.sin(time / 100 + index * 2) + 1) * 0.25;
+
+        ctx.globalAlpha = twinkle;
+        ctx.fillStyle =
+          index % 2 ? "#b5fff4" : "#ecd5ff";
+        ctx.beginPath();
+        ctx.arc(
+          point.x,
+          point.y,
+          1.5 + (index % 2),
+          0,
+          Math.PI * 2
+        );
+        ctx.fill();
+      });
+
+      ctx.restore();
+    }
+
+    function drawBall(ball, character, time) {
+      if (character.name === "Fireball") {
+        ball.trail.forEach((point, index) => {
+          const size =
+            3 +
+            (index / Math.max(1, ball.trail.length)) * 5;
+          drawFlame(point.x, point.y, size, time, index);
+        });
+
+        const angle = Math.atan2(ball.vy, ball.vx);
+        drawFlame(
+          ball.x - Math.cos(angle) * ball.r * 0.8,
+          ball.y - Math.sin(angle) * ball.r * 0.8,
+          10,
+          time,
+          3
+        );
+      } else if (character.name === "Monkey Ball") {
+        drawMonkeyTail(ball, time);
+      } else if (character.name === "Snowball") {
+        drawSnowEffect(ball, time);
+      } else if (character.name === "Galaxy Ball") {
+        drawGalaxyAurora(ball, time);
+      }
+
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(ball.x, ball.y, ball.r, 0, Math.PI * 2);
+      ctx.fillStyle = character.color;
+      ctx.shadowColor = character.color;
+      ctx.shadowBlur =
+        character.name === "Classic" ? 16 : 22;
+      ctx.fill();
+      ctx.shadowBlur = 0;
+
+      if (character.emoji) {
+        ctx.font = "19px system-ui, sans-serif";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText(
+          character.emoji,
+          ball.x,
+          ball.y + 1
+        );
+      }
+
+      ctx.restore();
+    }
+
+    function draw() {
+      ctx.clearRect(0, 0, W, H);
+      ctx.fillStyle = "#160d25";
+      ctx.fillRect(0, 0, W, H);
+
+      ctx.setLineDash([9, 13]);
+      ctx.strokeStyle = "#60437d";
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(W / 2, 0);
+      ctx.lineTo(W / 2, H);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      drawPaddle(34, leftY, getPaddleColor(0).hex);
+      drawPaddle(
+        W - 34 - paddle.w,
+        rightY,
+        getPaddleColor(1).hex
+      );
+
+      const character = getBallCharacter();
+      const time = performance.now();
+
+      balls.forEach(ball =>
+        drawBall(ball, character, time)
+      );
+    }
+
+    function frame(time) {
+      const dt =
+        Math.min((time - (lastTime || time)) / 1000, 0.03);
+      lastTime = time;
+
+      if (gameState === "playing") update(dt);
+      draw();
+      requestAnimationFrame(frame);
+    }
+
+    window.addEventListener("keydown", event => {
+      const key = event.key.toLowerCase();
+      const isSpace = event.code === "Space";
+      const targetIsControl =
+        event.target.closest("button, select");
+
+      if (isSpace && !targetIsControl) {
+        event.preventDefault();
+        if (!event.repeat) togglePause();
+        return;
+      }
+
+      if (["arrowup", "arrowdown"].includes(key)) {
+        event.preventDefault();
+      }
+
+      keys.add(key);
+    });
+
+    window.addEventListener("keyup", event => {
+      keys.delete(event.key.toLowerCase());
+    });
+
+    canvas.addEventListener("click", () => {
+      togglePause();
+      canvas.focus();
+    });
+
+    startGameButton.addEventListener("click", () => {
+      startScreen.hidden = true;
+      startOver();
+    });
+
+    pauseButton.addEventListener("click", togglePause);
+    nextRoundButton.addEventListener("click", startNextRound);
+    restartButton.addEventListener("click", startOver);
+
+    modeSelect.addEventListener("change", () => {
+      const twoPlayer = modeSelect.value === "twoPlayer";
+
+      document.querySelector("#player2Name").textContent =
+        twoPlayer ? "Player 2 👫" : "Computer 🤖";
+
+      document.querySelector("#player2Help").textContent =
+        twoPlayer
+          ? "Player 2: ↑ / ↓"
+          : "Medium CPU controls the right paddle";
+
+      document.querySelector("#controlsHelp").textContent =
+        twoPlayer
+          ? "Player 1: W / S · Player 2: ↑ / ↓"
+          : "Player 1: W / S or ↑ / ↓";
+
+      startOver();
+    });
+
+    updatePaddleMenus();
+    updateBallMenu();
+    updateLevelDisplay();
+    updateControls();
+    requestAnimationFrame(frame);
+  </script>
+</body>
+</html>
